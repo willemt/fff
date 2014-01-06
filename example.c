@@ -54,7 +54,7 @@ int main()
                 .file_removed = file_removed, 
                 .file_changed = file_changed, 
                 .file_moved = file_moved
-                }));
+                }), NULL);
     
     uv_run(loop, UV_RUN_DEFAULT);
 

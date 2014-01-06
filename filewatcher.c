@@ -25,12 +25,12 @@
 
 typedef struct file_s file_t;
 
-
 typedef struct {
     char* path;
     uv_loop_t *loop;
     hashmap_t *files;
     filewatcher_cbs_t cb;
+    void* cb_ctx;
 } filewatcher_private_t;
 
 struct file_s {
@@ -87,7 +87,7 @@ static void __stat_cb(uv_fs_t* req)
         if (0 != (r = uv_fs_readdir(me->loop, req_rd, f->name, 0,
                     __readdir_cb)))
         {
-
+            printf("ERROR\n");
         }
     }
 
@@ -120,7 +120,7 @@ static void __readdir_cb(uv_fs_t* req)
         stat_req->data = f;
         if (0 != (r = uv_fs_stat(me->loop, stat_req, f->name, __stat_cb)))
         {
-
+            printf("ERROR\n");
         }
 
         res += strlen(res) + 1;
@@ -132,9 +132,8 @@ static void __readdir_cb(uv_fs_t* req)
 void __add_file(filewatcher_private_t* me, file_t* f)
 {
     hashmap_put(me->files, f->name, f);
-
     if (me->cb.file_added)
-        me->cb.file_added(f->name, f->size, f->is_dir, f->mtime);
+        me->cb.file_added(me->cb_ctx, f->name, f->is_dir, f->size, f->mtime);
 }
 
 /**
@@ -158,7 +157,8 @@ static long __cmp_file(const void *obj, const void *other)
 filewatcher_t *filewatcher_new(
         char* directory,
         uv_loop_t* loop,
-        filewatcher_cbs_t *cbs)
+        filewatcher_cbs_t *cbs,
+        void* cb_ctx)
 {
     filewatcher_private_t* me;
     uv_fs_t *req;
@@ -174,7 +174,7 @@ filewatcher_t *filewatcher_new(
     req->data = me;
     if (0 != (r = uv_fs_readdir(loop, req, directory, 0, __readdir_cb)))
     {
-
+        printf("ERROR\n");
     }
 
     return (void*)me;
