@@ -45,6 +45,7 @@ struct file_s {
     void* udata;
 };
 
+#if WIN32
 int asprintf(char **resultp, const char *format, ...)
 {
     char buf[1024];
@@ -56,6 +57,7 @@ int asprintf(char **resultp, const char *format, ...)
     va_end (args);
     return 1;
 }
+#endif
 
 static void __readdir_cb(uv_fs_t* req);
 static void __stat_cb(uv_fs_t* req);
@@ -80,12 +82,11 @@ static void __stat_cb(uv_fs_t* req)
     f->mtime = req->statbuf.st_mtim.tv_sec;
     if (req->statbuf.st_mode & S_IFDIR)
     {
+        int r;
+
         f->is_dir = 1;
 
-        int r;
-        uv_fs_t *req_rd;
-
-        req_rd = calloc(1,sizeof(uv_fs_t));
+        uv_fs_t *req_rd = calloc(1,sizeof(uv_fs_t));
         req_rd->data = me;
 
         if (0 != (r = uv_fs_readdir(me->loop, req_rd, f->name, 0,
@@ -113,14 +114,13 @@ static void __readdir_cb(uv_fs_t* req)
     {
         int r;
         
-        file_t *f;
-        f = calloc(1,sizeof(file_t));
+        file_t *f = calloc(1,sizeof(file_t));
         asprintf(&f->name, "%s/%s", req->path, res);
         f->udata = me;
 
         /* stat() the file */
-        uv_fs_t *stat_req;
-        stat_req = malloc(sizeof(uv_fs_t));
+        // TODO replace with mempool/arena
+        uv_fs_t *stat_req = malloc(sizeof(uv_fs_t));
         stat_req->data = f;
         if (0 != (r = uv_fs_stat(me->loop, stat_req, f->name, __stat_cb)))
         {
@@ -164,12 +164,14 @@ void filewatcher_periodic(filewatcher_t* me_, int msec_since_last_period)
 
     __log(me_, NULL, "periodic elapsed time: %d", me->timeout_elapsed);
 
+#if 0
     me->timeout_elapsed += msec_since_last_period;
 
     if (me->request_timeout <= me->timeout_elapsed)
     {
         me->timeout_elapsed = 0;
     }
+#endif
 
     return 1;
 }
