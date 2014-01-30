@@ -26,9 +26,13 @@
 typedef struct file_s file_t;
 
 typedef struct {
+    /* monitored directory */
     char* path;
+
     uv_loop_t *loop;
+
     hashmap_t *files;
+
     filewatcher_cbs_t cb;
     void* cb_ctx;
 } filewatcher_private_t;
@@ -152,6 +156,22 @@ static unsigned long __hash_file(const void *obj)
 static long __cmp_file(const void *obj, const void *other)
 {
     return strcmp(obj,other);
+}
+
+void filewatcher_periodic(filewatcher_t* me_, int msec_since_last_period)
+{
+    filewatcher_private_t* me = (void*)me_;
+
+    __log(me_, NULL, "periodic elapsed time: %d", me->timeout_elapsed);
+
+    me->timeout_elapsed += msec_since_last_period;
+
+    if (me->request_timeout <= me->timeout_elapsed)
+    {
+        me->timeout_elapsed = 0;
+    }
+
+    return 1;
 }
 
 filewatcher_t *filewatcher_new(
