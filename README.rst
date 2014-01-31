@@ -1,25 +1,25 @@
 
-FileWatcher
+Friendlier File Follower
 =====
 
 What?
 -----
-C file watcher, designed to listen to filesystem events, BSD licensed
+fff is a file alteration monitor that listens to as many files as possible without exhausting OS watchers.
 
 How does it work?
 -----------------
-As directories become deeper it becomes more challenging to keep listening to all filesystem events.
+fff periodically scans directories for changes. It adds watchers if it believes the directory has enough points.
 
-**Hot files**
-Files that have had a lot of events are considered *hot*, and are watched more carefully
+Directories get points in different ways:
+- 1 point for each file they contain (ie. contents point)
+- 1 point when a file is modified to (ie. event point)
+- Their points get doubled if they aren't watched and a file is written to (ie. event points)
 
-**Periodic optimistic checker**
-Periodically the entire file system will be scanned for changes
+If a directory is modified:
+- If we have free space on the watch-list, we add the directory to the watch-list
+- Otherwise, if the anti-thrashing test succeeds: the least-recently-modified watched directory is dropped from the watch-list, and the modified directory takes it's place. The directory dropped from the watch-list has it's event based points set to zero.
 
-**Proximity**
-Files close to hot files are listened to more often
-
-See filewatcher.h for full documentation.
+See fff.h for full documentation.
 
 Dependencies
 ------------

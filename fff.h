@@ -14,7 +14,12 @@ typedef struct {
     int (*file_moved)(void* udata, char* name, char* new_name, unsigned long mtime);
 } filewatcher_cbs_t;
 
-filewatcher_t *filewatcher_new(
+/**
+ * @param path The directory we're going to follower
+ * @param loop libuv loop
+ * @param cb_ctx context that all callbacks get called with
+ * @return newly initialised file watcher */
+filewatcher_t *fff_new(
         char* directory,
         uv_loop_t* loop,
         filewatcher_cbs_t *cbs,

@@ -38,7 +38,7 @@ else
 endif
 
 
-example: example.c $(HASHMAP_DIR)/linked_list_hashmap.c filewatcher.c 
+example: example.c $(HASHMAP_DIR)/linked_list_hashmap.c fff.c 
 	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
 all: example
