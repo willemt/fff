@@ -41,8 +41,14 @@ struct file_s {
     char* name;
     unsigned int size;
     unsigned int mtime;
-    int is_dir;
     void* udata;
+
+    int is_dir;
+
+    int nchildren;
+
+    /* number of event points */
+    int event_pts;
 };
 
 #if WIN32
