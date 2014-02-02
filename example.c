@@ -1,9 +1,10 @@
 
 #include <stdio.h>
 #include <uv.h>
-#include "filewatcher.h"
+#include "fff.h"
 
 int file_added(
+    void* udata,
     char* name,
     int is_dir,
     unsigned int size,
@@ -13,19 +14,19 @@ int file_added(
     return 0;
 }
 
-int file_removed(char* name)
+int file_removed(void* udata, char* name)
 {
     printf("removed: %s\n", name);
     return 0;
 }
 
-int file_changed(char* name, int new_size, unsigned long mtime)
+int file_changed(void* udata, char* name, int new_size, unsigned long mtime)
 {
     printf("changed: %s %d\n", name, new_size);
     return 0;
 }
 
-int file_moved(char* name, char* new_name, unsigned long mtime)
+int file_moved(void* udata, char* name, char* new_name, unsigned long mtime)
 {
     printf("moved: %s %s\n", name, new_name);
     return 0;
@@ -35,7 +36,6 @@ static void __periodic(uv_timer_t* handle, int status)
 {
     printf("%d\n", status);
 }
-
 
 int main()
 {
@@ -48,7 +48,7 @@ int main()
     uv_timer_init(loop, periodic_req);
     uv_timer_start(periodic_req, __periodic, 0, 1000);
 
-    filewatcher_new(".", loop,
+    fff_new(".", loop,
             &((filewatcher_cbs_t){
                 .file_added = file_added, 
                 .file_removed = file_removed, 

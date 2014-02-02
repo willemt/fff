@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include "linked_list_hashmap.h"
-#include "filewatcher.h"
+#include "fff.h"
 
 typedef struct file_s file_t;
 
@@ -73,6 +73,13 @@ void __add_file(filewatcher_private_t* me, file_t* f);
 void __print_file(file_t* f, int depth)
 {
     printf("%s %dB %llu\n", f->name, f->size, f->mtime);
+}
+#endif
+
+#if 0
+static void __log(void *udata, void *src, const char *buf, ...)
+{
+    //printf("%s\n", buf);
 }
 #endif
 
@@ -164,13 +171,17 @@ static long __cmp_file(const void *obj, const void *other)
     return strcmp(obj,other);
 }
 
-void filewatcher_periodic(filewatcher_t* me_, int msec_since_last_period)
+/**
+ * Process events that are dependent on time passing
+ * @param msec_elapsed Time in milliseconds since the last call
+ * @return 1 on success; otherwise 0 */
+int fff_periodic(filewatcher_t* me_, int msec_elapsed)
 {
+#if 0
     filewatcher_private_t* me = (void*)me_;
 
     __log(me_, NULL, "periodic elapsed time: %d", me->timeout_elapsed);
 
-#if 0
     me->timeout_elapsed += msec_since_last_period;
 
     if (me->request_timeout <= me->timeout_elapsed)
@@ -182,7 +193,7 @@ void filewatcher_periodic(filewatcher_t* me_, int msec_since_last_period)
     return 1;
 }
 
-filewatcher_t *filewatcher_new(
+filewatcher_t *fff_new(
         char* directory,
         uv_loop_t* loop,
         filewatcher_cbs_t *cbs,
