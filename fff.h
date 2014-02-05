@@ -9,8 +9,14 @@ typedef struct {
             int is_dir,
             unsigned int size,
             unsigned long mtime);
+    /**
+     * Called when a file is removed */
     int (*file_removed)(void* udata, char* name);
+    /**
+     * Called when a file is changed */
     int (*file_changed)(void* udata, char* name, int new_size, unsigned long mtime);
+    /**
+     * Called when a file is moved */
     int (*file_moved)(void* udata, char* name, char* new_name, unsigned long mtime);
 } filewatcher_cbs_t;
 
@@ -24,4 +30,6 @@ filewatcher_t *fff_new(
         uv_loop_t* loop,
         filewatcher_cbs_t *cbs,
         void* cb_ctx);
+
+int fff_periodic(filewatcher_t* me_, int msec_since_last_period);
 
