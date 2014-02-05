@@ -18,6 +18,9 @@ typedef struct {
     /**
      * Called when a file is moved */
     int (*file_moved)(void* udata, char* name, char* new_name, unsigned long mtime);
+    /**
+     * Called when a directory is scanned */
+    int (*file_scanned)(void* udata, char* name);
 } filewatcher_cbs_t;
 
 /**

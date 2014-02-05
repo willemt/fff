@@ -32,9 +32,15 @@ int file_moved(void* udata, char* name, char* new_name, unsigned long mtime)
     return 0;
 }
 
+int file_scanned(void* udata, char* name)
+{
+    printf("scanned: %s %s\n", name);
+    return 0;
+}
+
 static void __periodic(uv_timer_t* handle, int status)
 {
-    printf("%d\n", status);
+
 }
 
 int main()
