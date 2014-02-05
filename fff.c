@@ -150,8 +150,8 @@ static void __readdir_cb(uv_fs_t* req)
     for (i=0; i<req->result; i++)
     {
         char path[512];
-        int r;
 
+        /* never seen this file before */
         snprintf(path,512,"%s/%s", req->path, res);
         if (!hashmap_get(me->files, path))
         {
@@ -159,15 +159,16 @@ static void __readdir_cb(uv_fs_t* req)
             asprintf(&f->name, "%s/%s", req->path, res);
             f->udata = me;
             hashmap_put(me->files, f->name, f);
+        }
 
-            /* stat() the file */
-            // TODO replace with mempool/arena
-            uv_fs_t *stat_req = malloc(sizeof(uv_fs_t));
-            stat_req->data = f;
-            if (0 != (r = uv_fs_stat(me->loop, stat_req, f->name, __stat_cb)))
-            {
-                printf("ERROR\n");
-            }
+        /* stat() the file */
+        // TODO replace with mempool/arena
+        int r;
+        uv_fs_t *stat_req = malloc(sizeof(uv_fs_t));
+        stat_req->data = f;
+        if (0 != (r = uv_fs_stat(me->loop, stat_req, f->name, __stat_cb)))
+        {
+            printf("ERROR\n");
         }
         
         res += strlen(res) + 1;
@@ -219,7 +220,6 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
 
         req = calloc(1,sizeof(uv_fs_t));
         req->data = me;
-
         if (0 != (r = uv_fs_readdir(loop, req, f->name, 0, __readdir_cb)))
         {
             printf("ERROR\n");
@@ -227,7 +227,7 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
 
         f->scan_priority -= 1;
 
-        /* move to aux queue */
+        /* move to aux queue if it's time */
         if (f->scan_priority <= 0 || 1 == rand() % 2)
         {
             f->scan_priority =
@@ -235,7 +235,7 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
             heap_offer(me->squ_aux,f);
         }
     }
-    else /* switch to other queue */
+    else /* queue is empty, switch to other queue */
     {
         heap_t* swp;
         swp = me->squ;
@@ -274,23 +274,12 @@ filewatcher_t *fff_new(
     me->loop = loop;
     memcpy(&me->cb, cbs, sizeof(filewatcher_cbs_t));
 
-    /* add first directory */
+    /* put first directory in queue */
     file_t *f = calloc(1,sizeof(file_t));
     asprintf(&f->name, "%s", directory);
     f->udata = me;
     f->is_dir = 1a;
     heap_offer(me->squ, f);
-
-#if 0
-    /* start watching */
-    req = calloc(1,sizeof(uv_fs_t));
-    req->data = me;
-    if (0 != (r = uv_fs_readdir(loop, req, directory, 0, __readdir_cb)))
-    {
-        printf("ERROR\n");
-    }
-
-#endif
 
     return (void*)me;
 }
