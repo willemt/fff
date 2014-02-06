@@ -26,7 +26,7 @@ See fff.h for full documentation.
 
 Dependencies
 ------------
-File watcher needs libuv.
+File watcher currently needs libuv.
 
 Building
 --------

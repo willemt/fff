@@ -1,10 +1,11 @@
 CONTRIB_DIR = ..
 HASHMAP_DIR = $(CONTRIB_DIR)/CHashMapViaLinkedList
+HEAP_DIR = $(CONTRIB_DIR)/CHeap
 GCOV_OUTPUT = *.gcda *.gcno *.gcov 
 GCOV_CCFLAGS = -fprofile-arcs -ftest-coverage
 SHELL  = /bin/bash
 CC     = gcc
-CCFLAGS = -g -O2 -Wall -Werror -Werror=return-type -Werror=uninitialized -Wcast-align -fno-omit-frame-pointer -fno-common -fsigned-char $(GCOV_CCFLAGS) -I$(HASHMAP_DIR) -Ilibuv/include -L.
+CCFLAGS = -g -O2 -Wall -Werror -Werror=return-type -Werror=uninitialized -Wcast-align -fno-omit-frame-pointer -fno-common -fsigned-char $(GCOV_CCFLAGS) -I$(HASHMAP_DIR) -I$(HEAP_DIR) -Ilibuv/include -L.
 LDFLAGS = -luv
 
 ifeq ($(OS),Windows_NT)
@@ -38,7 +39,7 @@ else
 endif
 
 
-example: example.c $(HASHMAP_DIR)/linked_list_hashmap.c fff.c 
+example: example.c $(HASHMAP_DIR)/linked_list_hashmap.c $(HEAP_DIR)/heap.c fff.c 
 	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
 all: example
@@ -48,7 +49,12 @@ chashmap:
 	git --git-dir=$(HASHMAP_DIR)/.git init 
 	pushd $(HASHMAP_DIR); git pull http://github.com/willemt/CHashMapViaLinkedList; popd
 
-downloadcontrib: chashmap
+cheap:
+	mkdir -p $(HEAP_DIR)/.git
+	git --git-dir=$(HEAP_DIR)/.git init 
+	pushd $(HEAP_DIR); git pull http://github.com/willemt/Cheap; popd
+
+downloadcontrib: chashmap cheap
 
 clean:
 	rm -f *.o tests $(GCOV_OUTPUT)

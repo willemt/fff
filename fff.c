@@ -57,9 +57,16 @@ typedef struct {
 } filewatcher_private_t;
 
 struct file_s {
+
+    /* currently this is the file path */
     char* name;
+
+    /* size in bytes */
     unsigned int size;
+
+    /* modification time */
     unsigned int mtime;
+
     void* udata;
 
     int is_dir;
@@ -115,51 +122,49 @@ static void __stat_cb(uv_fs_t* req)
 
     f->size = req->statbuf.st_size;
     f->mtime = req->statbuf.st_mtim.tv_sec;
-    if (req->statbuf.st_mode & S_IFDIR)
+    f->is_dir = (req->statbuf.st_mode & S_IFDIR) ? 1 : 0;
+
+    if (!hashmap_get(me->files, f->name))
     {
-        int r;
+        __add_file(me, f);
 
-        f->is_dir = 1;
-
-#if 0
-        uv_fs_t *req_rd = calloc(1,sizeof(uv_fs_t));
-        req_rd->data = me;
-
-        if (0 != (r = uv_fs_readdir(me->loop, req_rd, f->name, 0,
-                    __readdir_cb)))
-        {
-            printf("ERROR\n");
-        }
-#endif
+        /* put directory in queue */
+        if (f->is_dir)
+            heap_offer(me->squ_aux, f);
     }
-
-    __add_file(me, f);
 
     uv_fs_req_cleanup(req);
 }
 
+/**
+ * run a stat() on each file in directory */
 static void __readdir_cb(uv_fs_t* req)
 {
     filewatcher_private_t* me;
-    char* res;
+    char* fname; /* file name */
+    file_t* dir;
     int i;
 
-    me = req->data;
-    res = req->ptr;
+    dir = req->data;
+    me = dir->udata;
 
-    for (i=0; i<req->result; i++)
+    if (me->cb.file_scanned)
+        me->cb.file_scanned(me->cb_ctx, dir->name);
+
+    for (i=0, fname = req->ptr; i<req->result; i++)
     {
+        file_t *f;
         char path[512];
 
         /* never seen this file before */
-        snprintf(path,512,"%s/%s", req->path, res);
-        if (!hashmap_get(me->files, path))
+        snprintf(path,512,"%s/%s", req->path, fname);
+        if (!(f = hashmap_get(me->files, path)))
         {
-            file_t *f = calloc(1,sizeof(file_t));
-            asprintf(&f->name, "%s/%s", req->path, res);
+            f = calloc(1,sizeof(file_t));
             f->udata = me;
-            hashmap_put(me->files, f->name, f);
+            asprintf(&f->name, "%s/%s", req->path, fname);
         }
+
 
         /* stat() the file */
         // TODO replace with mempool/arena
@@ -171,8 +176,10 @@ static void __readdir_cb(uv_fs_t* req)
             printf("ERROR\n");
         }
         
-        res += strlen(res) + 1;
+        fname += strlen(fname) + 1;
     }
+
+    //__log(me->logger, "scanned, dir:%s, children:%d", dir->name, i);
 
     uv_fs_req_cleanup(req);
 }
@@ -219,8 +226,8 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
         assert(1 == f->is_dir);
 
         req = calloc(1,sizeof(uv_fs_t));
-        req->data = me;
-        if (0 != (r = uv_fs_readdir(loop, req, f->name, 0, __readdir_cb)))
+        req->data = f;
+        if (0 != (r = uv_fs_readdir(me->loop, req, f->name, 0, __readdir_cb)))
         {
             printf("ERROR\n");
         }
@@ -231,7 +238,7 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
         if (f->scan_priority <= 0 || 1 == rand() % 2)
         {
             f->scan_priority =
-                1 + abs(log(pow(f->pts,2) * ((double)(rand() % 100))/100));
+                1 + abs(log(pow(f->pts,2) * ((double)(rand() % 100))/100));
             heap_offer(me->squ_aux,f);
         }
     }
@@ -241,6 +248,7 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
         swp = me->squ;
         me->squ = me->squ_aux;
         me->squ_aux = swp;
+        //__log(me->logger, "swapped queue");
     }
 
     return 1;
@@ -278,7 +286,7 @@ filewatcher_t *fff_new(
     file_t *f = calloc(1,sizeof(file_t));
     asprintf(&f->name, "%s", directory);
     f->udata = me;
-    f->is_dir = 1a;
+    f->is_dir = 1;
     heap_offer(me->squ, f);
 
     return (void*)me;
