@@ -282,6 +282,7 @@ filewatcher_t *fff_new(
     me->squ_aux = heap_new(__cmp_file_scan_priority, NULL);
     me->files = hashmap_new(__hash_file, __cmp_file, 11);
     me->loop = loop;
+    me->cb_ctx = cb_ctx;
     memcpy(&me->cb, cbs, sizeof(filewatcher_cbs_t));
 
     /* put first directory in queue */
