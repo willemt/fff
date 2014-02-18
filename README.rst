@@ -10,7 +10,7 @@ How does it work?
 -----------------
 fff periodically scans directories for changes. It adds watchers if it believes the directory has enough points.
 
-Directories get points in different ways:
+**Directories get points in different ways**
 
 - 1 point for each file they contain (ie. contents point)
 
@@ -18,7 +18,7 @@ Directories get points in different ways:
 
 - Their points get doubled if they aren't watched and a file is modified (ie. event points)
 
-When a directory is modified:
+**When a directory is modified**
 
 - If we have free space on the watch-list, we add the directory to the watch-list
 

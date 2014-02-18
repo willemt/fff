@@ -218,6 +218,8 @@ int fff_periodic(filewatcher_t* me_, int msec_elapsed)
     filewatcher_private_t* me = (void*)me_;
     file_t* f;
 
+    if (!me_) return 0;
+
     if ((f = heap_poll(me->squ)))
     {
         uv_fs_t *req;
